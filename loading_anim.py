@@ -16,7 +16,7 @@ def composition(characters, cur_cnt):
 
 
 def incremental(characters, cur_cnt):
-    return characters[cur_cnt]   
+    return characters[cur_cnt]
 
 
 __MAX_ANIM_LEN = 20
@@ -114,7 +114,9 @@ if __name__ == '__main__':
     from msvcrt import getch
 
     done = 0
-    animation = ANIM_SPINNER
+    animation = ANIM_DOT_LINE
+    # animation = ANIM_EQ_BAR
+    # animation = ANIM_SPINNER
 
     def in_monitor():
         global done
