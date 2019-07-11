@@ -4,57 +4,65 @@ from time import sleep
 
 
 class LoadingAnim(object):
-    def __init__(self, characters, rep_cnt, display_func, delay=0.1):
-        self.characters = characters
+    def __init__(self, character_str, rep_cnt, display_func, delay=0.1):
+        self.character_str = character_str
         self.repeat_cnt = rep_cnt
         self.display_func = display_func
         self.delay = delay
 
-
-def composition(characters, cur_cnt):
-    return ''.join(x for x in characters[0:cur_cnt])
-
-
-def incremental(characters, cur_cnt):
-    return characters[cur_cnt]
+        # Clear string length based on animation length to avoid cursor jitter
+        if self.display_func == singular:
+            self.num_clear_spaces = 1
+        else:
+            self.num_clear_spaces = self.repeat_cnt
 
 
-__MAX_ANIM_LEN = 20
-__CLEAR_LINE_STR = '\r%s' % (' ' * __MAX_ANIM_LEN)
+def composition(character_str, cur_cnt):
+    return character_str[0:cur_cnt]
 
-__dots = ('.,' * (__MAX_ANIM_LEN - 1)).split(',')
-ANIM_DOT_LINE = LoadingAnim(__dots,
-                            len(__dots),
+
+def singular(character_str, cur_cnt):
+    return character_str[cur_cnt:cur_cnt + 1]
+
+
+_MAX_ANIM_LEN = 20
+
+_dots = '.' * _MAX_ANIM_LEN
+ANIM_DOT_LINE = LoadingAnim(_dots,
+                            len(_dots),
                             composition)
 
-__eq_bar = ('=,' * (__MAX_ANIM_LEN - 1)).split(',')
-ANIM_EQ_BAR = LoadingAnim(__eq_bar,
-                          len(__eq_bar),
+_eq_bar = '=' * _MAX_ANIM_LEN
+ANIM_EQ_BAR = LoadingAnim(_eq_bar,
+                          len(_eq_bar),
                           composition)
 
-__spinner = ['/', '-', '\\', '|', '']
-ANIM_SPINNER = LoadingAnim(__spinner,
-                           len(__spinner),
-                           incremental)
+_spinner = '/-\\|'
+ANIM_SPINNER = LoadingAnim(_spinner,
+                           len(_spinner),
+                           singular)
 
-__stop_anim = 0
-__anim_thread = None
-__anim_thread_started = 0
+_stop_anim = 0
+_anim_thread = None
+_anim_thread_started = 0
 
 
 def __animation_behavior(animation):
-    global __stop_anim
+    global _stop_anim
 
     cur_anim_cnt = 0
+    clear_str = '\r%s' % (' ' * animation.num_clear_spaces)
+
+    # Make local copies of data
     local_repeat_cnt = animation.repeat_cnt
-    local_chars = animation.characters
+    local_chars = animation.character_str
     local_display_func = animation.display_func
     local_delay = animation.delay
 
-    while not __stop_anim:
+    while not _stop_anim:
         # Reset
         cur_anim_cnt = 0
-        stdout.write(__CLEAR_LINE_STR)
+        stdout.write(clear_str)
         stdout.flush()
 
         while cur_anim_cnt < local_repeat_cnt:
@@ -71,41 +79,41 @@ def __animation_behavior(animation):
 
 
 def anim_start(animation):
-    global __stop_anim
-    global __anim_thread
-    global __anim_thread_started
+    global _stop_anim
+    global _anim_thread
+    global _anim_thread_started
 
     # Sanity check
-    if __anim_thread_started:
-        __stop_anim = 1
-        __anim_thread.join()
+    if _anim_thread_started:
+        _stop_anim = 1
+        _anim_thread.join()
         raise RuntimeError('Calling \'anim_start\' while an '
                            'animation is already in-progress.')
 
     else:
         # Place in 'else' in case Exception is no longer raised
         # on error in the future
-        __stop_anim = 0
-        __anim_thread = Thread(target=__animation_behavior, args=(animation,))
-        __anim_thread.start()
-        __anim_thread_started = 1
+        _stop_anim = 0
+        _anim_thread = Thread(target=__animation_behavior, args=(animation,))
+        _anim_thread.start()
+        _anim_thread_started = 1
 
 
 def anim_stop():
-    global __stop_anim
-    global __anim_thread
-    global __anim_thread_started
+    global _stop_anim
+    global _anim_thread
+    global _anim_thread_started
 
     # Sanity check
-    if not __anim_thread_started:
+    if not _anim_thread_started:
         raise RuntimeError('Calling \'anim_stop\' on terminated animation.')
 
     else:
         # Place in 'else' in case Exception is no longer raised
         # on error in the future
-        __stop_anim = 1
-        __anim_thread.join()
-        __anim_thread_started = 0
+        _stop_anim = 1
+        _anim_thread.join()
+        _anim_thread_started = 0
 
 
 # Testing
@@ -114,9 +122,9 @@ if __name__ == '__main__':
     from msvcrt import getch
 
     done = 0
-    animation = ANIM_DOT_LINE
+    # animation = ANIM_DOT_LINE
     # animation = ANIM_EQ_BAR
-    # animation = ANIM_SPINNER
+    animation = ANIM_SPINNER
 
     def in_monitor():
         global done
